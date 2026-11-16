@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: sad-priorizacao-chamados
+    runtime: python
+    # Sem 'plan', o Blueprint do Render assume um plano pago (starter). 'free' evita cobrança;
+    # nele o serviço "dorme" após ~15 min sem acessos e a primeira requisição demora para acordar.
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT app:app
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: HISTORICO_LIMITE
+        value: "200"
+      - key: APP_ENV
+        value: production
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      # Obrigatória para persistir os dados (PostgreSQL/Supabase). Preencher no painel do Render.
+      - key: DATABASE_URL
+        sync: false

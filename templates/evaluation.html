@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Avaliação do modelo | Nexo{% endblock %}
+{% block breadcrumb %}Avaliação do modelo{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">VALIDAÇÃO · QUALIDADE DA RECOMENDAÇÃO</div><h1>Avaliação do modelo</h1><p>Veja como a classificação se comportou e compare a fila recomendada com estratégias mais simples.</p></div></div>
+<div class="notice notice-warning"><strong>Interpretação dos resultados:</strong> os dados iniciais são simulados. As métricas avaliam o comportamento do protótipo nesse cenário e não comprovam eficácia em uma empresa real.</div>
+<section class="panel section-panel">
+  <div class="panel-heading"><div><h2>1. Classificação do risco de violação do SLA</h2><p>Árvore de decisão treinada com chamados resolvidos e avaliados em dados separados.</p></div><span class="metric-chip">{{ n_treino }} treino · {{ n_teste }} teste</span></div>
+  <div class="metrics-grid metrics-four metric-inner">
+    <article class="metric-card"><span class="metric-label">Acurácia</span><strong>{{ '%.1f'|format(metricas['Acurácia']*100) }}%</strong><small>Previsões corretas</small></article>
+    <article class="metric-card"><span class="metric-label">Precisão</span><strong>{{ '%.1f'|format(metricas['Precisão']*100) }}%</strong><small>Acertos entre os alertas</small></article>
+    <article class="metric-card"><span class="metric-label">Recall</span><strong>{{ '%.1f'|format(metricas['Recall']*100) }}%</strong><small>Violações identificadas</small></article>
+    <article class="metric-card"><span class="metric-label">F1-score</span><strong>{{ '%.1f'|format(metricas['F1-score']*100) }}%</strong><small>Equilíbrio entre precisão e recall</small></article>
+  </div>
+  <div class="two-column-eval">
+    <div><h3 class="subheading">Árvore x referência</h3><div class="table-wrap"><table class="data-table compact-table"><thead><tr><th>MÉTRICA</th><th>ÁRVORE</th><th>CLASSE MAJORITÁRIA</th></tr></thead><tbody>
+      {% for nome in ['Acurácia','Precisão','Recall','F1-score','AUC'] %}<tr><td>{{ nome }}</td><td><strong>{{ '%.3f'|format(metricas[nome]) }}</strong></td><td>{{ '%.3f'|format(metricas_base[nome]) }}</td></tr>{% endfor %}
+    </tbody></table></div></div>
+    <div><h3 class="subheading">Matriz de confusão</h3>{{ matriz_confusao|safe }}<p class="small-note">No conjunto de teste, {{ violacoes_teste }} chamados efetivamente violaram o SLA.</p></div>
+  </div>
+  {% if aviso_classificador %}<div class="notice notice-warning">{{ aviso_classificador }}</div>{% endif %}
+  {% if recall_baixo and not aviso_classificador %}<div class="notice notice-warning">O recall está abaixo de 65%. O classificador deixa de identificar parte das violações reais; portanto, a probabilidade deve ser usada como apoio, não como garantia.</div>{% endif %}
+  <details class="technical-details"><summary>Ver validação cruzada e atributos utilizados</summary>
+    <div class="table-wrap"><table class="data-table compact-table"><thead><tr><th>MÉTRICA</th><th>MÉDIA</th><th>DESVIO-PADRÃO</th></tr></thead><tbody>{% for row in validacao_cv %}<tr><td>{{ row['Métrica'] }}</td><td>{{ '%.3f'|format(row['média']) }}</td><td>{{ '%.3f'|format(row['desvio-padrão']) }}</td></tr>{% endfor %}</tbody></table></div>
+    {{ chart_importancias|safe }}
+    <details class="technical-details nested"><summary>Regras completas da árvore</summary><pre class="code-block">{{ regras }}</pre></details>
+  </details>
+</section>
+
+<section class="panel section-panel">
+  <div class="panel-heading"><div><h2>2. Comparação das filas</h2><p>Comparação retrospectiva dos {{ top_n }} primeiros chamados de cada política.</p></div></div>
+  <p class="body-note">O resultado real do SLA é utilizado somente para avaliar as políticas, nunca para gerar a recomendação.</p>
+  <div class="table-wrap"><table class="data-table"><thead><tr><th>POLÍTICA</th><th>VIOLAÇÕES NO TOP {{ top_n }}</th><th>VIOLAÇÕES CAPTURADAS</th><th>PRECISÃO</th><th>IMPACTO COBERTO</th></tr></thead><tbody>
+  {% for row in comparacao %}<tr><td><strong>{{ row['Política'] }}</strong></td><td>{{ row['Violações no top ' ~ top_n] }}</td><td>{{ '%.1f'|format(row['% das violações capturadas']*100) }}%</td><td>{{ '%.1f'|format(row['Precisão']*100) }}%</td><td>{{ '%.1f'|format(row['% do impacto coberto']*100) }}%</td></tr>{% endfor %}
+  </tbody></table></div>
+  <p class="small-note">O total de violações no histórico analisado é {{ total_violacoes }}. Os resultados dependem da base simulada e não garantem o mesmo desempenho em dados reais.</p>
+  <details class="technical-details"><summary>Ver curva comparativa para diferentes tamanhos de fila</summary>{{ chart_curva|safe }}</details>
+</section>
+
+<section class="panel section-panel">
+  <div class="panel-heading"><div><h2>3. Sensibilidade dos pesos</h2><p>O sistema altera cada peso em 50%, um de cada vez, e observa quanto a fila muda.</p></div></div>
+  <div class="table-wrap"><table class="data-table"><thead><tr><th>CRITÉRIO</th><th>SOBREPOSIÇÃO +50%</th><th>CORRELAÇÃO +50%</th><th>SOBREPOSIÇÃO -50%</th><th>CORRELAÇÃO -50%</th></tr></thead><tbody>
+  {% for row in sensibilidade %}<tr><td><strong>{{ row['Critério'] }}</strong></td>{% for key, value in row.items() if key != 'Critério' %}<td>{% if 'Sobreposição' in key %}{{ '%.0f'|format(value*100) }}%{% else %}{{ '%.3f'|format(value) }}{% endif %}</td>{% endfor %}</tr>{% endfor %}
+  </tbody></table></div>
+</section>
+<section class="panel section-panel"><div class="panel-heading"><div><h2>Premissas e limitações</h2><p>Aspectos importantes para interpretar os resultados.</p></div></div>
+  <ul class="limit-list"><li>Os dados são sintéticos; os resultados demonstram o comportamento do protótipo no cenário simulado.</li><li>O conjunto de teste é separado do treinamento e a validação cruzada complementa a avaliação.</li><li>Os grupos do K-Means são perfis exploratórios e podem apresentar sobreposição.</li><li>Urgência, criticidade, usuários afetados e risco podem representar aspectos parcialmente relacionados.</li><li>Pesos e faixas P1/P2/P3 são parâmetros ajustáveis definidos para o cenário.</li><li>O sistema recomenda uma ordem de atendimento, mas a decisão final continua sendo do coordenador.</li></ul>
+</section>
+{% endblock %}

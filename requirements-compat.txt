@@ -1,0 +1,15 @@
+# Alternativa de COMPATIBILIDADE: faixas de versão (as mesmas do pacote original).
+# Use somente se o seu Python for anterior à 3.12 e o requirements.txt não instalar.
+# Atenção: com versões diferentes das testadas, métricas do K-Means e da árvore podem variar
+# levemente; nesse caso, use os números exibidos pela própria aplicação (página Avaliação).
+Flask>=3.0,<4.0
+Flask-WTF>=1.2,<2.0
+python-dotenv>=1.0,<2.0
+SQLAlchemy>=2.0,<3.0
+psycopg[binary]>=3.2,<4.0
+pandas>=2.0,<3.0
+numpy>=1.26,<3.0
+scikit-learn>=1.3,<2.0
+plotly>=5.18,<7.0
+gunicorn>=22.0,<24.0
+pytest>=8.0,<9.0

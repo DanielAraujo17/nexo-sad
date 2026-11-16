@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Histórico e análises | Nexo{% endblock %}
+{% block breadcrumb %}Histórico e análises{% endblock %}
+{% block content %}
+<div class="page-heading"><div><div class="eyebrow">DADOS · COMPORTAMENTO DO SUPORTE</div><h1>Histórico e análises</h1><p>Explore os chamados encerrados, acompanhe os indicadores e entenda os perfis identificados pelo agrupamento.</p></div><a class="button button-light" href="{{ url_for('exportar_historico') }}">⇩ Exportar histórico</a></div>
+<div class="history-banner"><span class="history-banner-icon">◷</span><div><strong>Histórico dinâmico</strong><p>O sistema conserva os {{ historico_limite }} chamados resolvidos mais recentes. Chamados em aberto não entram na retenção nem são removidos automaticamente.</p></div><div class="history-banner-count"><strong>{{ resumo.total }}</strong><small>resolvidos analisados</small></div></div>
+<div class="metrics-grid metrics-four">
+  <article class="metric-card"><div class="metric-top"><span>Chamados resolvidos</span><span class="metric-icon blue">✓</span></div><strong>{{ resumo.total }}</strong><small>Registros no histórico atual</small></article>
+  <article class="metric-card"><div class="metric-top"><span>Violaram o SLA</span><span class="metric-icon red">!</span></div><strong>{{ '%.1f'|format(resumo.taxa_violacao * 100)|replace('.', ',') }}%</strong><small>Taxa histórica de violação</small></article>
+  <article class="metric-card"><div class="metric-top"><span>Tempo médio de resolução</span><span class="metric-icon amber">◷</span></div><strong>{{ '%.1f'|format(resumo.tempo_medio_h)|replace('.', ',') }} h</strong><small>Entre os chamados encerrados</small></article>
+  <article class="metric-card"><div class="metric-top"><span>Acima do SLA no registro</span><span class="metric-icon purple">↗</span></div><strong>{{ resumo.ja_acima_do_prazo }}</strong><small>Na idade histórica avaliada</small></article>
+</div>
+<div class="two-column-charts">
+  <section class="panel chart-panel"><div class="panel-heading"><div><h2>Chamados por categoria</h2><p>Distribuição do histórico por resultado do SLA.</p></div></div>{{ chart_categoria|safe }}</section>
+  <section class="panel chart-panel"><div class="panel-heading"><div><h2>Tempo de resolução por urgência</h2><p>Comparação com os prazos hipotéticos de SLA.</p></div></div>{{ chart_urgencia|safe }}</section>
+</div>
+<section class="panel section-panel">
+  <div class="panel-heading"><div><h2>Perfis de chamados identificados</h2><p>O K-Means agrupa solicitações com características semelhantes.</p></div><span class="metric-chip">Silhueta: {{ '%.2f'|format(silhueta)|replace('.', ',') }}</span></div>
+  <div class="table-wrap"><table class="data-table"><thead><tr><th>PERFIL</th><th>CHAMADOS</th><th>USUÁRIOS (MÉDIA)</th><th>CRITICIDADE</th><th>IDADE NA AVALIAÇÃO (H)</th><th>RECORRÊNCIAS</th><th>VIOLAÇÃO SLA</th><th>AÇÃO SUGERIDA</th></tr></thead><tbody>
+  {% for perfil in perfis %}<tr><td><strong>{{ perfil['Perfil'] }}</strong></td><td>{{ perfil['Chamados'] }}</td><td>{{ '%.1f'|format(perfil['Usuários afetados (média)']) }}</td><td>{{ '%.1f'|format(perfil['Criticidade média']) }}</td><td>{{ '%.1f'|format(perfil['Idade na avaliação (h)']) }}</td><td>{{ '%.1f'|format(perfil['Recorrências médias']) }}</td><td>{{ '%.1f'|format(perfil['Violação histórica (%)']) }}%</td><td class="action-cell">{{ perfil['Ação sugerida'] }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% if silhueta < 0.25 %}<div class="notice notice-warning">Os grupos apresentam sobreposição considerável. Interprete-os como perfis exploratórios de apoio, não como categorias rígidas.</div>{% endif %}
+  {% if chart_clusters %}<details class="technical-details"><summary>Ver projeção técnica dos grupos (PCA)</summary>{{ chart_clusters|safe }}</details>{% endif %}
+</section>
+<section class="panel section-panel">
+  <div class="panel-heading"><div><h2>Últimos chamados resolvidos</h2><p>Os 15 encerramentos mais recentes. A base mantém até {{ historico_limite }} registros.</p></div><a class="text-link" href="{{ url_for('exportar_historico') }}">Baixar todos os {{ resumo.total }} registros →</a></div>
+  <div class="table-wrap"><table class="data-table"><thead><tr><th>CHAMADO</th><th>RESUMO</th><th>CATEGORIA</th><th>URGÊNCIA</th><th>TEMPO</th><th>RESULTADO SLA</th><th>ENCERRADO EM</th></tr></thead><tbody>
+  {% for item in recentes[:15] %}<tr><td><strong>#{{ item.id_chamado }}</strong></td><td>{{ item.titulo }}</td><td>{{ item.categoria }}</td><td>{{ item.urgencia }}</td><td>{{ '%.2f'|format(item.tempo_resolucao_horas or 0)|replace('.', ',') }} h</td><td><span class="status-tag {{ 'status-risk' if item.violou_sla else 'status-ok' }}">{{ 'Violou SLA' if item.violou_sla else 'Dentro do SLA' }}</span></td><td>{% if item.resolvido_em %}{{ item.resolvido_em.strftime('%d/%m/%Y %H:%M') }}{% else %}—{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% if not recentes %}<div class="empty-state"><h3>Histórico vazio</h3><p>Quando um chamado for encerrado, ele aparecerá aqui.</p></div>{% endif %}
+</section>
+{% endblock %}

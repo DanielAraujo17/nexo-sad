@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Central de decisão | Nexo{% endblock %}
+{% block breadcrumb %}Central de decisão{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <div class="eyebrow">OPERAÇÃO · FILA DE ATENDIMENTO</div>
+    <h1>Central de priorização</h1>
+    <p>Veja quais solicitações precisam de atenção primeiro e entenda os critérios por trás de cada recomendação.</p>
+  </div>
+  <a class="button button-primary" href="#novo-chamado"><span>＋</span> Registrar chamado</a>
+</div>
+
+
+<div class="metrics-grid metrics-four">
+  <article class="metric-card"><div class="metric-top"><span>Chamados em aberto</span><span class="metric-icon blue">▤</span></div><strong>{{ metricas.abertos }}</strong><small>Solicitações aguardando atendimento</small></article>
+  <article class="metric-card"><div class="metric-top"><span>Prioridade alta · P1</span><span class="metric-icon red">↑</span></div><strong>{{ metricas.p1 }}</strong><small>Devem receber maior atenção</small></article>
+  <article class="metric-card"><div class="metric-top"><span>Prioridade média · P2</span><span class="metric-icon amber">↗</span></div><strong>{{ metricas.p2 }}</strong><small>Importância intermediária</small></article>
+  <article class="metric-card"><div class="metric-top"><span>Risco alto de SLA</span><span class="metric-icon purple">!</span></div><strong>{{ metricas.risco_alto }}</strong><small>Maior probabilidade estimada de atraso</small></article>
+</div>
+
+<div class="content-grid">
+  <section class="panel queue-panel">
+    <div class="panel-heading">
+      <div><h2>Fila recomendada</h2><p>Ordenada pela pontuação do modelo de decisão.</p></div>
+      <a class="button button-light button-small" href="{{ url_for('exportar_fila') }}">⇩ Exportar CSV</a>
+    </div>
+    <div class="capacity-note"><span class="capacity-mark">✓</span><span>Capacidade do próximo ciclo: <strong>{{ capacidade }} chamados</strong>. Os primeiros da fila estão destacados para atendimento nesta rodada.</span></div>
+    <form method="get" action="{{ url_for('index') }}" class="filter-bar">
+      <label class="field search-field"><span>Buscar chamado</span><input type="search" name="q" value="{{ busca }}" placeholder="Número, resumo ou categoria"></label>
+      <label class="field"><span>Prioridade</span><select name="prioridade"><option value="Todas" {% if prioridade == 'Todas' %}selected{% endif %}>Todas</option><option value="P1" {% if prioridade == 'P1' %}selected{% endif %}>P1 · Alta</option><option value="P2" {% if prioridade == 'P2' %}selected{% endif %}>P2 · Média</option><option value="P3" {% if prioridade == 'P3' %}selected{% endif %}>P3 · Baixa</option></select></label>
+      <button class="button button-light filter-button" type="submit">Filtrar</button>
+      {% if busca or prioridade != 'Todas' %}<a class="clear-filter" href="{{ url_for('index') }}">Limpar</a>{% endif %}
+    </form>
+
+    {% if fila %}
+    <div class="table-wrap">
+      <table class="data-table queue-table">
+        <thead><tr><th>POS.</th><th>CHAMADO</th><th>URGÊNCIA</th><th>USUÁRIOS</th><th>RISCO SLA</th><th>PONTUAÇÃO</th><th>PRIORIDADE</th><th></th></tr></thead>
+        <tbody>
+        {% for item in fila %}
+          <tr>
+            <td><span class="position-number {% if item.posicao <= capacidade %}position-active{% endif %}">{{ item.posicao }}</span></td>
+            <td><a class="ticket-link" href="{{ url_for('detalhe_chamado', id_chamado=item.id_chamado) }}"><strong>#{{ item.id_chamado }} · {{ item.titulo }}</strong><small>{{ item.categoria }} · {{ '%.1f'|format(item.idade_horas)|replace('.', ',') }} h aguardando</small></a></td>
+            <td><span class="urgency-text urgency-{{ item.urgencia|lower|replace('í','i')|replace('á','a')|replace('é','e') }}">{{ item.urgencia }}</span></td>
+            <td>{{ item.usuarios_afetados }}</td>
+            <td><div class="risk-cell"><strong>{{ '%.0f'|format(item.risco_pct) }}%</strong><span class="risk-track"><i style="width: {{ [item.risco_pct, 100]|min }}%"></i></span></div></td>
+            <td><strong>{{ '%.1f'|format(item.pontuacao)|replace('.', ',') }}</strong></td>
+            <td><span class="priority priority-{{ item.prioridade|lower }}">{{ item.prioridade }}</span></td>
+            <td><a class="table-action" href="{{ url_for('detalhe_chamado', id_chamado=item.id_chamado) }}" aria-label="Ver chamado">→</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty-state"><div class="empty-icon">✓</div><h3>Nenhum chamado encontrado</h3><p>{% if total_fila == 0 %}A fila está vazia. Registre um novo chamado para começar.{% else %}Ajuste os filtros para visualizar os chamados.{% endif %}</p><a class="button button-primary button-small" href="#novo-chamado">Registrar chamado</a></div>
+    {% endif %}
+    <div class="table-footer"><span>Exibindo {{ fila|length }} de {{ total_fila }} chamados em aberto</span><span><a href="{{ url_for('analises') }}">Ver histórico e análises →</a></span></div>
+  </section>
+
+  <aside class="right-column">
+    <section class="panel decision-panel">
+      <div class="panel-heading compact"><div><h2>Critérios de decisão</h2><p>Personalize a importância de cada fator.</p></div><span class="panel-icon">⚙</span></div>
+      <form method="post" action="{{ url_for('preferencias') }}" class="settings-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% for criterio in criterios %}
+          <label class="range-field"><span>{{ nomes_criterios[criterio] }}</span><strong>{{ pesos[criterio] }}%</strong><input type="range" name="peso_{{ criterio }}" min="0" max="100" step="5" value="{{ pesos[criterio] }}"></label>
+        {% endfor %}
+        <label class="field capacity-field"><span>Capacidade por ciclo</span><select name="capacidade">{% for n in range(1, 31) %}<option value="{{ n }}" {% if capacidade == n %}selected{% endif %}>{{ n }} chamados</option>{% endfor %}</select></label>
+        <button class="button button-primary button-full" type="submit">Aplicar critérios</button>
+      </form>
+      <form method="post" action="{{ url_for('restaurar_preferencias') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="text-button">Restaurar pesos padrão</button></form>
+      <p class="helper-text">Os pesos são normalizados automaticamente para totalizar 100%. Urgência e idade também influenciam a estimativa de risco.</p>
+    </section>
+    <section class="panel new-ticket-panel" id="novo-chamado">
+      <div class="panel-heading compact"><div><h2>Novo chamado</h2><p>Registre uma solicitação para avaliar sua prioridade.</p></div><span class="panel-icon plus-icon">＋</span></div>
+      <form method="post" action="{{ url_for('criar_chamado') }}" class="form-stack"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="field"><span>Resumo do problema</span><input type="text" name="titulo" maxlength="180" placeholder="Ex.: Equipe sem acesso à rede interna"></label>
+        <div class="form-row">
+          <label class="field"><span>Categoria</span><select name="categoria" required>{% for value in ['Rede','Hardware','Software','Acesso','Impressora','Sistema'] %}<option>{{ value }}</option>{% endfor %}</select></label>
+          <label class="field"><span>Urgência</span><select name="urgencia" required>{% for value in ['Baixa','Média','Alta','Crítica'] %}<option {% if value == 'Média' %}selected{% endif %}>{{ value }}</option>{% endfor %}</select></label>
+        </div>
+        <div class="form-row">
+          <label class="field"><span>Complexidade</span><select name="complexidade" required>{% for value in ['Baixa','Média','Alta'] %}<option {% if value == 'Média' %}selected{% endif %}>{{ value }}</option>{% endfor %}</select></label>
+          <label class="field"><span>Usuários afetados</span><input type="number" name="usuarios_afetados" min="1" max="200" value="1" required></label>
+        </div>
+        <div class="form-row">
+          <label class="field"><span>Criticidade (1 a 5)</span><select name="criticidade">{% for n in range(1,6) %}<option value="{{ n }}" {% if n == 3 %}selected{% endif %}>{{ n }}{% if n == 1 %} · baixa{% elif n == 5 %} · muito alta{% endif %}</option>{% endfor %}</select></label>
+          <label class="field"><span>Recorrências</span><input type="number" name="recorrencias" min="0" max="10" value="0" required></label>
+        </div>
+        <div class="form-hint">O chamado começa com zero horas de espera. O tempo de resolução e o resultado do SLA são registrados somente no encerramento.</div>
+        <button class="button button-primary button-full" type="submit">Registrar e calcular prioridade <span>→</span></button>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

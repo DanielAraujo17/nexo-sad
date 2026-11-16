@@ -1,0 +1,323 @@
+{
+ "ambiente": {
+  "python": "3.12.3",
+  "scikit-learn": "1.9.1",
+  "numpy": "2.5.5",
+  "pandas": "2.3.3"
+ },
+ "base": {
+  "origem": "semente determinística (SQLite em memória)",
+  "resolvidos": 200,
+  "violacoes": 65,
+  "taxa_violacao_pct": 32.5,
+  "tempo_medio_h": 19.19,
+  "p95_usuarios": 35.0,
+  "ja_acima_do_prazo": 12,
+  "taxa_violacao_se_ja_acima_do_prazo": 1.0,
+  "taxa_violacao_se_dentro_do_prazo": 0.2819
+ },
+ "classificacao": {
+  "n_treino": 160,
+  "n_teste": 40,
+  "violacoes_teste": 13,
+  "teste_arvore": {
+   "Acurácia": 0.8,
+   "Precisão": 0.8571,
+   "Recall": 0.4615,
+   "F1-score": 0.6,
+   "AUC": 0.9402
+  },
+  "teste_referencia_majoritaria": {
+   "Acurácia": 0.675,
+   "Precisão": 0.0,
+   "Recall": 0.0,
+   "F1-score": 0.0,
+   "AUC": 0.5
+  },
+  "matriz_confusao": {
+   "VN": 26,
+   "FP": 1,
+   "FN": 7,
+   "VP": 6
+  },
+  "validacao_cruzada_media": {
+   "Acurácia": 0.8,
+   "Precisão": 0.6773,
+   "Recall": 0.7385,
+   "F1-score": 0.6993,
+   "AUC": 0.9031
+  },
+  "validacao_cruzada_desvio": {
+   "Acurácia": 0.0274,
+   "Precisão": 0.0222,
+   "Recall": 0.1427,
+   "F1-score": 0.0682,
+   "AUC": 0.0316
+  },
+  "importancias_top5": {
+   "complexidade_n": 0.425,
+   "idade_rel_sla": 0.41,
+   "urgencia_n": 0.157,
+   "usuarios_afetados": 0.007,
+   "criticidade": 0.0
+  }
+ },
+ "agrupamento": {
+  "silhueta_k3": 0.2166,
+  "variancia_pca_2_componentes": 0.586,
+  "silhueta_por_k": {
+   "2": 0.2358,
+   "3": 0.2166,
+   "4": 0.2045,
+   "5": 0.2124,
+   "6": 0.2056
+  },
+  "perfis": {
+   "Recorrente": {
+    "chamados": 41,
+    "usuarios_afetados_media": 4.1,
+    "criticidade_media": 2.49,
+    "idade_horas_media": 18.13,
+    "recorrencias_media": 2.78
+   },
+   "Pontual, baixo impacto": {
+    "chamados": 85,
+    "usuarios_afetados_media": 3.58,
+    "criticidade_media": 2.44,
+    "idade_horas_media": 16.67,
+    "recorrencias_media": 0.48
+   },
+   "Alto impacto": {
+    "chamados": 74,
+    "usuarios_afetados_media": 18.14,
+    "criticidade_media": 4.03,
+    "idade_horas_media": 3.8,
+    "recorrencias_media": 0.95
+   }
+  }
+ },
+ "politicas_top20": {
+  "FIFO (mais antigo primeiro)": {
+   "violacoes_no_top": 6,
+   "pct_das_violacoes_capturadas": 9.2,
+   "precisao_pct": 30.0,
+   "pct_do_impacto_coberto": 1.8
+  },
+  "Só por urgência": {
+   "violacoes_no_top": 9,
+   "pct_das_violacoes_capturadas": 13.8,
+   "precisao_pct": 45.0,
+   "pct_do_impacto_coberto": 22.0
+  },
+  "Modelo ponderado (SAD)": {
+   "violacoes_no_top": 17,
+   "pct_das_violacoes_capturadas": 26.2,
+   "precisao_pct": 85.0,
+   "pct_do_impacto_coberto": 38.4
+  }
+ },
+ "sensibilidade_top20": {
+  "sobreposicao_min_pct": 80.0,
+  "sobreposicao_max_pct": 100.0,
+  "correlacao_spearman_min": 0.99,
+  "correlacao_spearman_max": 0.998
+ },
+ "caso_concreto": {
+  "pesos_normalizados": {
+   "urgencia": 0.25,
+   "criticidade": 0.2,
+   "usuarios": 0.15,
+   "idade": 0.15,
+   "recorrencias": 0.1,
+   "risco": 0.15
+  },
+  "chamados": [
+   {
+    "posicao_sad": 1,
+    "posicao_fifo": 6,
+    "posicao_urgencia": 1,
+    "id_chamado": 9001,
+    "titulo": "Sem acesso à internet em todo o setor",
+    "urgencia": "Crítica",
+    "usuarios": 25,
+    "criticidade": 5,
+    "recorrencias": 1,
+    "idade_horas": 2.0,
+    "risco_pct": 50.0,
+    "pontuacao": 72.7,
+    "prioridade": "P1",
+    "notas": {
+     "urgencia": 100.0,
+     "criticidade": 100.0,
+     "usuarios": 71.4,
+     "idade": 50.0,
+     "recorrencias": 20.0,
+     "risco": 50.0
+    },
+    "contribuicoes": {
+     "urgencia": 25.0,
+     "criticidade": 20.0,
+     "usuarios": 10.7,
+     "idade": 7.5,
+     "recorrencias": 2.0,
+     "risco": 7.5
+    }
+   },
+   {
+    "posicao_sad": 2,
+    "posicao_fifo": 4,
+    "posicao_urgencia": 2,
+    "id_chamado": 9005,
+    "titulo": "Conta de equipe bloqueada",
+    "urgencia": "Alta",
+    "usuarios": 8,
+    "criticidade": 3,
+    "recorrencias": 2,
+    "idade_horas": 9.0,
+    "risco_pct": 100.0,
+    "pontuacao": 68.2,
+    "prioridade": "P1",
+    "notas": {
+     "urgencia": 75.0,
+     "criticidade": 60.0,
+     "usuarios": 22.9,
+     "idade": 100.0,
+     "recorrencias": 40.0,
+     "risco": 100.0
+    },
+    "contribuicoes": {
+     "urgencia": 18.8,
+     "criticidade": 12.0,
+     "usuarios": 3.4,
+     "idade": 15.0,
+     "recorrencias": 4.0,
+     "risco": 15.0
+    }
+   },
+   {
+    "posicao_sad": 3,
+    "posicao_fifo": 5,
+    "posicao_urgencia": 3,
+    "id_chamado": 9003,
+    "titulo": "ERP lento no financeiro",
+    "urgencia": "Alta",
+    "usuarios": 12,
+    "criticidade": 4,
+    "recorrencias": 0,
+    "idade_horas": 6.5,
+    "risco_pct": 70.0,
+    "pontuacao": 62.6,
+    "prioridade": "P1",
+    "notas": {
+     "urgencia": 75.0,
+     "criticidade": 80.0,
+     "usuarios": 34.3,
+     "idade": 81.2,
+     "recorrencias": 0.0,
+     "risco": 70.0
+    },
+    "contribuicoes": {
+     "urgencia": 18.8,
+     "criticidade": 16.0,
+     "usuarios": 5.1,
+     "idade": 12.2,
+     "recorrencias": 0.0,
+     "risco": 10.5
+    }
+   },
+   {
+    "posicao_sad": 4,
+    "posicao_fifo": 2,
+    "posicao_urgencia": 4,
+    "id_chamado": 9006,
+    "titulo": "Programa fecha sozinho",
+    "urgencia": "Média",
+    "usuarios": 3,
+    "criticidade": 2,
+    "recorrencias": 1,
+    "idade_horas": 30.0,
+    "risco_pct": 100.0,
+    "pontuacao": 53.8,
+    "prioridade": "P2",
+    "notas": {
+     "urgencia": 50.0,
+     "criticidade": 40.0,
+     "usuarios": 8.6,
+     "idade": 100.0,
+     "recorrencias": 20.0,
+     "risco": 100.0
+    },
+    "contribuicoes": {
+     "urgencia": 12.5,
+     "criticidade": 8.0,
+     "usuarios": 1.3,
+     "idade": 15.0,
+     "recorrencias": 2.0,
+     "risco": 15.0
+    }
+   },
+   {
+    "posicao_sad": 5,
+    "posicao_fifo": 3,
+    "posicao_urgencia": 5,
+    "id_chamado": 9004,
+    "titulo": "Troca de monitor solicitada",
+    "urgencia": "Média",
+    "usuarios": 1,
+    "criticidade": 2,
+    "recorrencias": 0,
+    "idade_horas": 20.0,
+    "risco_pct": 70.0,
+    "pontuacao": 43.9,
+    "prioridade": "P2",
+    "notas": {
+     "urgencia": 50.0,
+     "criticidade": 40.0,
+     "usuarios": 2.9,
+     "idade": 83.3,
+     "recorrencias": 0.0,
+     "risco": 70.0
+    },
+    "contribuicoes": {
+     "urgencia": 12.5,
+     "criticidade": 8.0,
+     "usuarios": 0.4,
+     "idade": 12.5,
+     "recorrencias": 0.0,
+     "risco": 10.5
+    }
+   },
+   {
+    "posicao_sad": 6,
+    "posicao_fifo": 1,
+    "posicao_urgencia": 6,
+    "id_chamado": 9002,
+    "titulo": "Impressora sem toner",
+    "urgencia": "Baixa",
+    "usuarios": 1,
+    "criticidade": 1,
+    "recorrencias": 3,
+    "idade_horas": 60.0,
+    "risco_pct": 70.0,
+    "pontuacao": 39.7,
+    "prioridade": "P3",
+    "notas": {
+     "urgencia": 25.0,
+     "criticidade": 20.0,
+     "usuarios": 2.9,
+     "idade": 83.3,
+     "recorrencias": 60.0,
+     "risco": 70.0
+    },
+    "contribuicoes": {
+     "urgencia": 6.2,
+     "criticidade": 4.0,
+     "usuarios": 0.4,
+     "idade": 12.5,
+     "recorrencias": 6.0,
+     "risco": 10.5
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Chamado #{{ chamado.id_chamado }} | Nexo{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('index') }}">Central de decisão</a> <span>/</span> Chamado #{{ chamado.id_chamado }}{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><div class="eyebrow">DETALHES DA SOLICITAÇÃO</div><h1>Chamado #{{ chamado.id_chamado }}</h1><p>Informações do atendimento e justificativa da recomendação do sistema.</p></div>
+  <a class="button button-light" href="{{ url_for('index') }}">← Voltar à fila</a>
+</div>
+<section class="panel ticket-detail-panel">
+  <div class="ticket-detail-title"><div><div class="ticket-meta"><span class="priority {% if chamado.status == 'aberto' %}priority-{{ recomendacao.prioridade|lower if recomendacao else 'p2' }}{% else %}priority-resolved{% endif %}">{{ recomendacao.prioridade if recomendacao else 'Resolvido' }}</span><span class="status-tag status-{{ chamado.status }}">{{ 'Em aberto' if chamado.status == 'aberto' else 'Resolvido' }}</span></div><h2>{{ chamado.titulo }}</h2></div></div>
+  <div class="detail-grid">
+    <div class="detail-item"><span>Categoria</span><strong>{{ chamado.categoria }}</strong></div>
+    <div class="detail-item"><span>Urgência</span><strong>{{ chamado.urgencia }}</strong></div>
+    <div class="detail-item"><span>Usuários afetados</span><strong>{{ chamado.usuarios_afetados }}</strong></div>
+    <div class="detail-item"><span>Criticidade</span><strong>{{ chamado.criticidade }}/5</strong></div>
+    <div class="detail-item"><span>Complexidade</span><strong>{{ chamado.complexidade }}</strong></div>
+    <div class="detail-item"><span>Recorrências</span><strong>{{ chamado.recorrencias }}</strong></div>
+    <div class="detail-item"><span>{% if chamado.status == 'aberto' %}Tempo aguardando{% else %}Idade na última avaliação{% endif %}</span><strong>{{ '%.2f'|format(chamado.idade_horas)|replace('.', ',') }} h</strong></div>
+    <div class="detail-item"><span>Prazo hipotético do SLA</span><strong>{{ sla_horas }} h</strong></div>
+  </div>
+  {% if recomendacao %}
+  <div class="recommendation-box">
+    <div class="recommendation-head"><div><span class="eyebrow">RECOMENDAÇÃO DO SAD</span><h3>Posição {{ recomendacao.posicao }} na fila</h3></div><div class="score-bubble"><strong>{{ '%.1f'|format(recomendacao.pontuacao)|replace('.', ',') }}</strong><small>pontuação</small></div></div>
+    <div class="detail-grid recommendation-metrics"><div class="detail-item"><span>Risco estimado de violação do SLA</span><strong>{{ '%.0f'|format(recomendacao.risco_pct) }}% · {{ recomendacao.faixa_risco }}</strong></div><div class="detail-item"><span>Grupo identificado</span><strong>{{ recomendacao.grupo }}</strong></div></div>
+    <p>{{ recomendacao.acao_sugerida }}</p>
+    <h4>Critérios que mais contribuíram</h4>
+    <div class="contribution-list">{% for item in fatores %}<div><span>{{ item.nome }}</span><strong>+{{ '%.1f'|format(item.valor)|replace('.', ',') }}</strong></div>{% endfor %}</div>
+  </div>
+  <div class="resolve-callout"><div><strong>Atendimento concluído?</strong><p>Ao encerrar, o sistema calcula o tempo decorrido, verifica o SLA e move o chamado para o histórico.</p></div><form method="post" action="{{ url_for('resolver_chamado', id_chamado=chamado.id_chamado) }}" onsubmit="return confirm('Confirmar o encerramento deste chamado? O tempo e o resultado do SLA serão registrados.');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-primary" type="submit">Registrar resolução</button></form></div>
+  {% else %}
+  <div class="resolved-summary"><div class="resolved-icon">✓</div><div><strong>Chamado encerrado</strong><p>Tempo de resolução: {{ '%.2f'|format(chamado.tempo_resolucao_horas or 0)|replace('.', ',') }} horas.</p><p>Resultado: <strong>{{ 'Violou o SLA' if chamado.violou_sla else 'Dentro do SLA' }}</strong>.</p></div></div>
+  {% endif %}
+</section>
+{% endblock %}
